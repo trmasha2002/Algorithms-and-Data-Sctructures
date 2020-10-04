@@ -1,0 +1,21 @@
+int main() {
+    int n;
+    int last_elem, x;
+    bool find = false;
+    scanf("%d", &n);
+    scanf("%d", &last_elem);
+    for (int i = 0; i < n - 1; i++) {
+        scanf("%d", &x);
+        if (last_elem == 0 && !find){
+            if (x == 1) {
+                printf("%d", 0);
+                printf("%d", 0);
+            }
+            printf("%d", 1);
+            find = true;
+            last_elem = 1;
+        } else{
+            printf("%d", last_elem);
+            last_elem = x;
+        }
+    }
