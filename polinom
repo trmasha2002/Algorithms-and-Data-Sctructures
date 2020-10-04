@@ -1,0 +1,21 @@
+#include <stdio.h>
+
+int main() {
+    long long int n, k, x, a, caff;
+    scanf("%lli%lli%lli", &n, &k, &x);
+    long long int r = 0;
+    for (int i = 0; i < n - k +1; i++) {
+        scanf("%lli", &a);
+        caff = n - i;
+        for (int j = 0; j < k; j++) {
+            a *= caff;
+            caff--;
+        }
+        r += a;
+        if (i != n - k) {
+            r *= x;
+        }
+    }
+    printf("%lli", r);
+    return 0;
+}
