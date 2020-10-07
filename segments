@@ -1,0 +1,37 @@
+#include <stdio.h>
+long long min(long long a, long long b){
+    if (a < b){
+        return a;
+    }
+    return b;
+}
+long long max(long long a, long long b){
+    if (a > b){
+        return a;
+    }
+    return b;
+}
+int main() {
+    int n;
+    long long x, y;
+    long long xs, ys;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++){
+        scanf("%lli%lli", &x, &y);
+        if (i == 0){
+            xs = x;
+            ys = y;
+        } else {
+            if (min(ys, y) - max(xs, x) >= -1) {
+                xs = min(xs, x);
+                ys = max(ys, y);
+            } else {
+                printf("%lli %lli\n", xs, ys);
+                xs = x;
+                ys = y;
+            }
+        }
+    }
+    printf("%lli %lli\n", xs, ys);
+    return 0;
+}
