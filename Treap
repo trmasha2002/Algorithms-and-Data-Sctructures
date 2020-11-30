@@ -1,0 +1,254 @@
+#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <cassert>
+#include <vector>
+#include <ctime>
+ 
+using namespace std;
+ 
+struct Treap {
+    long long val;
+    int len;
+    Treap *left, *right, *prev;
+    int prior;
+ 
+    Treap (long long a = 0):
+            val(a), len(1), left(nullptr), right(nullptr), prev(nullptr), prior(rand()) {}
+};
+ 
+void update(Treap *x) {
+    if (x == nullptr)
+        return;
+    x->len = ((x->left) ? x->left->len : 0) + ((x->right) ? x->right->len : 0) + 1;
+    if (x->left != nullptr){
+        x->left->prev = x;
+    }
+    if (x->right != nullptr){
+        x->right->prev = x;
+    }
+}
+ 
+Treap *merge(Treap *l, Treap *r) {
+    if (l == nullptr)
+        return r;
+    if (r == nullptr)
+        return l;
+    if (l->prior < r->prior) {
+        r->left = merge(l, r->left);
+        update(r);
+        return r;
+    } else {
+        l->right = merge(l->right, r);
+        update(l);
+        return l;
+    }
+}
+ 
+void split(Treap *root, Treap *&l, Treap *&r, int sz_left) {
+    if (root == nullptr) {
+        l = r = nullptr;
+        return;
+    }
+    int lsz = (root->left) ? root->left->len : 0;
+    if (sz_left <= lsz) {
+        Treap *tmp_l, *tmp_r;
+        split(root->left, tmp_l, tmp_r, sz_left);
+        root->left = tmp_r;
+        //tmp_r->prev = root;
+        l = tmp_l,
+        r = root;
+    } else {
+        Treap *tmp_l, *tmp_r;
+        split(root->right, tmp_l, tmp_r, sz_left - lsz - 1);
+        root->right = tmp_l;
+        //tmp_l->prev = root;
+        l = root,
+                r = tmp_r;
+    }
+    update(root);
+}
+ 
+void add(Treap *&root, int pos, int val,  vector<Treap*> &vertex) {
+    Treap *z = new Treap(val), *l, *r;
+    vertex[pos] = z;
+    split(root, l, r, pos);
+    root = merge(merge(l, z), r);
+}
+ 
+void print(Treap *root) {
+    if (root == nullptr) return;
+    print(root->left);
+    cout << root->val << " ";
+    print(root->right);
+}
+ 
+void make_prev(Treap *root){
+    if (root == nullptr) return;
+    if (root->left){
+        root->left->prev = root;
+    }
+    if (root->right){
+        root->right->prev = root;
+    }
+    make_prev(root->left);
+    // cout << root->val << " ";
+    make_prev(root->right);
+}
+ 
+ 
+Treap* search(Treap *root, int pos){
+    if (!root) return nullptr;
+    int lsz = (root->left) ? root->left->len : 0;
+    if (pos == lsz + 1) return root;
+    else if (lsz >= pos) return search(root->left, pos);
+    else return search(root->right, pos - lsz - 1);
+ 
+}
+int search_ind_by_key(Treap *root, int num){
+    if (!root){
+        return 0;
+    }
+    if (root->val == num){
+        int rsz = (root->right) ? root->right->len : 0;
+        return root->len - rsz;
+    } else if(root->val > num){
+        return search_ind_by_key(root->left, num);
+    } else {
+        int rsz = (root->right) ? root->right->len : 0;
+        return  root->len - rsz + search_ind_by_key(root->right, num);
+    }
+}
+int get_need_sz(Treap *find){
+    if (!find) return 0;
+    if (!find->prev) return 0;
+    Treap *prev = find->prev;
+    if (prev->right == find){
+        int lsz = (prev->left) ? prev->left->len : 0;
+        return lsz + 1 + get_need_sz(prev);
+    } else {
+        return get_need_sz(prev);
+    }
+}
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    Treap *root = nullptr;
+    vector <Treap*> vertex;
+    //Treap *root2 = nullptr;
+    int n, m, q, t;
+    //n = rand() % 8;
+    //m = rand() % 9;
+    //t = rand() % 2;
+    //cout << n << ' ' << m << ' ' <<  t << '\n';
+    cin >> m >> n >> t;
+    vertex.resize(n + 1);
+    vector <int> ask(m);
+    //int l, r, x;
+    Treap *left, *mid, *right;
+    for (int i = 1; i <= n; i++){
+        add(root, i , i, vertex);
+        // add(root2, i, i);
+    }
+    make_prev(root);
+    for (int i = 1; i < n + 1; i++) {
+        if (vertex[i]) {
+            // cout << vertex[i]->val << ' ';
+        }
+    }
+ //   for (int i = 1; i < n + 1; i++) {
+//        int lsz = (vertex[i]->left) ? vertex[i]->left->len : 0;
+ //       int result = get_need_sz(vertex[i]) + lsz + 1;
+        //cout << result << ' ';
+//    }
+    if (t == 1) {
+        for (int i = 0; i < m; i++) {
+            //q = rand() % n;
+           // q += 1;
+            cin >> q;
+            ask[i] = q;
+            int lsz = (vertex[q]->left) ? vertex[q]->left->len : 0;
+            int result = get_need_sz(vertex[q]) + lsz + 1;
+            cout << result << ' ';
+            split(root, left, right, result);
+            split(left, left, mid, result - 1);
+            //cout << mid->val;
+            root = merge(merge(mid, left), right);
+        }
+    } else {
+        for (int i = 0; i < m; i++) {
+            cin >> q;
+            ask[i] = q;
+            Treap* t = search(root, q);
+            //int lsz = (vertex[q]->left) ? vertex[q]->left->len : 0;
+            //int result = get_need_sz(vertex[q]) + lsz + 1;
+            cout << t->val << ' ';
+            split(root, left, right, q);
+            split(left, left, mid, q - 1);
+            //cout << mid->val;
+            root = merge(merge(mid, left), right);
+        }
+    }
+   // if (t == 1){
+    //    cout << '\n';
+   //     vector <int> ans;
+    //    for (int i = 1; i < n + 1; i++){
+   //         ans.push_back(i);
+   //     }
+   //     for (int i = 0; i < m; i++){
+    //        auto it = find(ans.begin(), ans.end(), ask[i]);
+    //        cout << it - ans.begin() + 1 << ' ';
+     //       ans.erase(it);
+     //       ans.insert(ans.begin(), ask[i]);
+     //   }
+  //  }
+   // if (t == 2){
+   //     cout << '\n';
+   //     vector <int> ans;
+    //    for (int i = 1; i < n + 1; i++){
+    //        ans.push_back(i);
+    //    }
+    //    for (int i = 0; i < m; i++){
+    //        cout << ans[ask[i] - 1]<< ' ';
+   //         int result = ans[ask[i] - 1];
+    //        ans.erase(ans.begin() + ask[i] - 1);
+   //         ans.insert(ans.begin(), result);
+   //     }
+  //  }
+   // cout << '\n';
+   // for (int i = 0 ;i < ask.size(); i++){
+   //     cout << ask[i] << ' ';
+   // }
+    //cout << search_ind_by_key(root, 50);
+    //   for (int i = 0; i < m; i++) {
+    //      cin >> q;
+    //     int val = search_ind_by_key(root, q);
+    //    cout << val << ' ';
+    //    Treap *t2 = search(root, val);
+    //    split(root, left, right, 1);
+    //    merge()
+    //    del(root, t2->val);
+    //    add(root, 1, q);
+    //   Treap *t3 = search(root, 1);
+    //   Treap *t4 = t3;
+ 
+//    for (int i = 1; i <= n; i++){
+    //       add(root2, i + 1 , i + 1);
+    //  }
+    //  for (int i = 0; i < m; i++){
+    //      cin >> x;
+    //     split(root, left, right, x);
+    //}
+    // for (int i = 0; i < m; i++) {
+    //     cin >> l >> r;
+    //     l--;
+    //    r--;
+    //    split(root, left, right, r + 1);
+    //    split(left, left, mid, l);
+    //    root = merge(merge(mid, left), right);
+    // }
+    // print(root);
+    // cout << '\n';
+    return 0;
+}
